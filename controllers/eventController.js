@@ -2,7 +2,7 @@ const Event = require('../models/Event');
 
 // Add new event with base64 encoded images
 exports.addEvent = async (req, res) => {
-  const { eventName, startDate, endDate, location, aboutEvent, images } = req.body;
+  const { eventName, startDate, endDate, location, aboutEvent, images , comments} = req.body;
   const userId = req.user.id;
 
   // Validate images (ensure they are base64 strings)
@@ -28,6 +28,7 @@ exports.addEvent = async (req, res) => {
       location,
       aboutEvent,
       images,
+      comments,
     });
 
     await newEvent.save();
@@ -89,6 +90,41 @@ exports.updateEvent = async (req, res) => {
 
     await event.save();
     res.json({ message: 'Event updated successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+
+
+// Get event by ID
+exports.getEventById = async (req, res) => {
+  const { eventId } = req.params;
+
+  try {
+    const event = await Event.findById(eventId).populate('comments.userId', 'profileImage');
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
+
+    res.json(event);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+
+//Get events by location
+exports.getEventsByLocation = async (req, res) => {
+  const { location } = req.params;
+
+  try {
+    const events = await Event.find({ location });
+    if (!events || events.length === 0) {
+      return res.status(404).json({ message: 'Events not found' });
+    }
+
+    res.json(events);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }
