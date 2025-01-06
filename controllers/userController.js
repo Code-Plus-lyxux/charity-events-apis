@@ -1,8 +1,9 @@
+const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 
 // Update user profile
 exports.updateProfile = async (req, res) => {
-  const { firstName, lastName, mobile, profileImage } = req.body;
+  const { firstName, lastName, mobile, profileImage, password } = req.body;
   const userId = req.user.id; // Get user ID from JWT token
 
   try {
@@ -15,6 +16,11 @@ exports.updateProfile = async (req, res) => {
     user.lastName = lastName || user.lastName;
     user.mobile = mobile || user.mobile;
     user.profileImage = profileImage || user.profileImage;
+
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(password, salt);
+    }
 
     await user.save();
     res.json({ message: 'Profile updated successfully' });
