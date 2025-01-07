@@ -9,6 +9,13 @@ const EventSchema = new mongoose.Schema({
   aboutEvent: { type: String, required: true },
   images: [String], // Array of base64 encoded image strings
   status: { type: Number, default: 1 }, // 0: hosting, 1: upcoming, 2: past
+  comments: [
+    {
+      userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+      comment: { type: String, required: true },
+      createdAt: { type: Date, default: Date.now }
+    }
+  ],
 });
 
 module.exports = mongoose.model('Event', EventSchema);
