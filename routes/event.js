@@ -5,7 +5,6 @@ const {
     getEvents,
     updateEvent,
     deleteEvent,
-    getEventById,
 } = require("../controllers/eventController");
 const { authenticate } = require("../middleware/auth");
 
@@ -17,12 +16,6 @@ router.get(
     "/",
     // authenticate, //removed for testing purposes
     getEvents
-);
-
-router.get(
-    "/:id",
-    // authenticate,  //removed for testing purposes
-    getEventById
 );
 
 // Update event
