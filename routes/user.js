@@ -6,10 +6,6 @@ const { authenticate } = require("../middleware/auth");
 // Update user profile
 router.put("/profile", authenticate, updateProfile);
 
-router.get(
-    "/:id",
-    // authenticate, //removed for testing purposes
-    getUserById
-);
+router.get("/:id", authenticate, getUserById);
 
 module.exports = router;

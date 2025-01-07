@@ -1,8 +1,17 @@
 const express = require("express");
 const router = express.Router();
-const { addEvent, getEvents, updateEvent, deleteEvent, getEventById ,getEventsByLocation} = require('../controllers/eventController');
-const { authenticate } = require('../middleware/auth');
-
+const {
+    addEvent,
+    getEvents,
+    updateEvent,
+    deleteEvent,
+    getEventById,
+    getEventsByLocation,
+    get3EventsByStatus,
+    get3UpcomingEventsByLocation,
+    getAllUpcomingEventsByLocation,
+} = require("../controllers/eventController");
+const { authenticate } = require("../middleware/auth");
 
 // Add new event
 router.post("/add", authenticate, addEvent);
@@ -21,9 +30,26 @@ router.put("/update", authenticate, updateEvent);
 router.delete("/delete", authenticate, deleteEvent);
 
 //Get event by id
-router.get('/:eventId', authenticate, getEventById);
+router.get("/:eventId", authenticate, getEventById);
 
-//Get event bu location
-router.get('/location/:location', getEventsByLocation); 
+//Get event by location
+router.get("/location/:location", authenticate, getEventsByLocation);
+
+//Get events by status
+router.get("/status/:status", authenticate, get3EventsByStatus);
+
+//Get 3 upcoming events by location
+router.get(
+    "/upcoming-3-by-location/:location",
+    authenticate,
+    get3UpcomingEventsByLocation
+);
+
+//Get all upcoming events by location
+router.get(
+    "/upcoming-all-by-location/:location",
+    authenticate,
+    getAllUpcomingEventsByLocation
+);
 
 module.exports = router;
