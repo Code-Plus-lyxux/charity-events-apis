@@ -3,7 +3,7 @@ const User = require('../models/User');
 
 // Update user profile
 exports.updateProfile = async (req, res) => {
-  const { firstName, lastName, mobile, profileImage, password } = req.body;
+  const { fullName, mobile, profileImage, password,about,location } = req.body;
   const userId = req.user.id; // Get user ID from JWT token
 
   try {
@@ -12,10 +12,12 @@ exports.updateProfile = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    user.firstName = firstName || user.firstName;
-    user.lastName = lastName || user.lastName;
+    user.fullName = fullName || user.fullName;
     user.mobile = mobile || user.mobile;
     user.profileImage = profileImage || user.profileImage;
+    user.about = about || user.about;
+    user.location = location || user.location;
+
 
     if (password) {
       const salt = await bcrypt.genSalt(10);
