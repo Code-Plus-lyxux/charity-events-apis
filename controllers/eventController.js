@@ -1,4 +1,4 @@
-const Event = require('../models/Event');
+const Event = require("../models/Event");
 
 // Add new event with base64 encoded images
 exports.addEvent = async (req, res) => {
@@ -40,59 +40,71 @@ exports.addEvent = async (req, res) => {
 
 // Get list of events
 exports.getEvents = async (req, res) => {
-  const { status, page, pageSize } = req.query;
-  const userId = req.user.id;
+    const { status, page, pageSize } = req.query;
+    const userId = req.user.id;
 
-  try {
-    const query = { userId };
-    if (status) query.status = status;
+    try {
+        const query = { userId };
+        if (status) query.status = status;
 
-    const events = await Event.find(query)
-      .skip((page - 1) * pageSize)
-      .limit(Number(pageSize));
+        const events = await Event.find(query)
+            .skip((page - 1) * pageSize)
+            .limit(Number(pageSize));
 
-    const totalEvents = await Event.countDocuments(query);
-    res.json({ events, totalEvents });
-  } catch (err) {
-    res.status(500).json({ message: 'Server error' });
-  }
+        const totalEvents = await Event.countDocuments(query);
+        res.json({ events, totalEvents });
+    } catch (err) {
+        res.status(500).json({ message: "Server error" });
+    }
 };
 
 // Update event with base64 encoded images
 exports.updateEvent = async (req, res) => {
-  const { eventId, eventName, startDate, endDate, location, aboutEvent, images } = req.body;
-  
-  // Validate base64 encoded images
-  if (images && images.length > 5) {
-    return res.status(400).json({ message: 'You can only upload up to 5 images' });
-  }
-  
-  const isValidBase64 = (str) => {
-    return /^data:image\/\w+;base64,/.test(str);
-  };
-  
-  if (images && !images.every(isValidBase64)) {
-    return res.status(400).json({ message: 'One or more images are not in valid base64 format' });
-  }
+    const {
+        eventId,
+        eventName,
+        startDate,
+        endDate,
+        location,
+        aboutEvent,
+        images,
+    } = req.body;
 
-  try {
-    const event = await Event.findById(eventId);
-    if (!event) {
-      return res.status(404).json({ message: 'Event not found' });
+    // Validate base64 encoded images
+    if (images && images.length > 5) {
+        return res
+            .status(400)
+            .json({ message: "You can only upload up to 5 images" });
     }
 
-    event.eventName = eventName || event.eventName;
-    event.startDate = startDate || event.startDate;
-    event.endDate = endDate || event.endDate;
-    event.location = location || event.location;
-    event.aboutEvent = aboutEvent || event.aboutEvent;
-    event.images = images || event.images;
+    const isValidBase64 = (str) => {
+        return /^data:image\/\w+;base64,/.test(str);
+    };
 
-    await event.save();
-    res.json({ message: 'Event updated successfully' });
-  } catch (err) {
-    res.status(500).json({ message: 'Server error' });
-  }
+    if (images && !images.every(isValidBase64)) {
+        return res.status(400).json({
+            message: "One or more images are not in valid base64 format",
+        });
+    }
+
+    try {
+        const event = await Event.findById(eventId);
+        if (!event) {
+            return res.status(404).json({ message: "Event not found" });
+        }
+
+        event.eventName = eventName || event.eventName;
+        event.startDate = startDate || event.startDate;
+        event.endDate = endDate || event.endDate;
+        event.location = location || event.location;
+        event.aboutEvent = aboutEvent || event.aboutEvent;
+        event.images = images || event.images;
+
+        await event.save();
+        res.json({ message: "Event updated successfully" });
+    } catch (err) {
+        res.status(500).json({ message: "Server error" });
+    }
 };
 
 
@@ -132,11 +144,11 @@ exports.getEventsByLocation = async (req, res) => {
 
 // Delete event
 exports.deleteEvent = async (req, res) => {
-  const { eventId } = req.body;
-  try {
-    await Event.findByIdAndDelete(eventId);
-    res.json({ message: 'Event deleted successfully' });
-  } catch (err) {
-    res.status(500).json({ message: 'Server error' });
-  }
+    const { eventId } = req.body;
+    try {
+        await Event.findByIdAndDelete(eventId);
+        res.json({ message: "Event deleted successfully" });
+    } catch (err) {
+        res.status(500).json({ message: "Server error" });
+    }
 };
