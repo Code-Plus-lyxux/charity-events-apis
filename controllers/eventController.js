@@ -2,44 +2,40 @@ const Event = require("../models/Event");
 
 // Add new event with base64 encoded images
 exports.addEvent = async (req, res) => {
-    const { eventName, startDate, endDate, location, aboutEvent, images } =
-        req.body;
-    const userId = req.user.id;
+  const { eventName, startDate, endDate, location, aboutEvent, images , comments} = req.body;
+  const userId = req.user.id;
 
-    // Validate images (ensure they are base64 strings)
-    if (images && images.length > 5) {
-        return res
-            .status(400)
-            .json({ message: "You can only upload up to 5 images" });
-    }
+  // Validate images (ensure they are base64 strings)
+  if (images && images.length > 5) {
+    return res.status(400).json({ message: 'You can only upload up to 5 images' });
+  }
+  
+  // Validate base64 encoding
+  const isValidBase64 = (str) => {
+    return /^data:image\/\w+;base64,/.test(str); // Check for base64 image data URI
+  };
+  
+  if (images && !images.every(isValidBase64)) {
+    return res.status(400).json({ message: 'One or more images are not in valid base64 format' });
+  }
 
-    // Validate base64 encoding
-    const isValidBase64 = (str) => {
-        return /^data:image\/\w+;base64,/.test(str); // Check for base64 image data URI
-    };
+  try {
+    const newEvent = new Event({
+      userId,
+      eventName,
+      startDate,
+      endDate,
+      location,
+      aboutEvent,
+      images,
+      comments,
+    });
 
-    if (images && !images.every(isValidBase64)) {
-        return res.status(400).json({
-            message: "One or more images are not in valid base64 format",
-        });
-    }
-
-    try {
-        const newEvent = new Event({
-            userId,
-            eventName,
-            startDate,
-            endDate,
-            location,
-            aboutEvent,
-            images,
-        });
-
-        await newEvent.save();
-        res.status(201).json({ message: "Event added successfully" });
-    } catch (err) {
-        res.status(500).json({ message: "Server error" });
-    }
+    await newEvent.save();
+    res.status(201).json({ message: 'Event added successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
 };
 
 // Get list of events
@@ -109,6 +105,41 @@ exports.updateEvent = async (req, res) => {
     } catch (err) {
         res.status(500).json({ message: "Server error" });
     }
+};
+
+
+
+// Get event by ID
+exports.getEventById = async (req, res) => {
+  const { eventId } = req.params;
+
+  try {
+    const event = await Event.findById(eventId).populate('comments.userId', 'profileImage');
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
+
+    res.json(event);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+
+//Get events by location
+exports.getEventsByLocation = async (req, res) => {
+  const { location } = req.params;
+
+  try {
+    const events = await Event.find({ location });
+    if (!events || events.length === 0) {
+      return res.status(404).json({ message: 'Events not found' });
+    }
+
+    res.json(events);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
 };
 
 // Delete event
