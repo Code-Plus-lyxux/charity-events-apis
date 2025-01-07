@@ -9,7 +9,7 @@ router.put("/profile", authenticate, upload.single("profileImage"), updateProfil
 
 router.get(
     "/:id",
-    // authenticate, //removed for testing purposes
+    authenticate, //removed for testing purposes
     getUserById
 );
 

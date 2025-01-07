@@ -11,7 +11,7 @@ router.post("/add", authenticate, addEvent);
 // Get events
 router.get(
     "/",
-    // authenticate, //removed for testing purposes
+    authenticate, //removed for testing purposes
     getEvents
 );
 

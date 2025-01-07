@@ -41,6 +41,7 @@ exports.addEvent = async (req, res) => {
 
     // Add the event to the user's eventsAttending array
     const user = await User.findById(userId);
+    // console.log(user)
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -62,7 +63,7 @@ exports.addEvent = async (req, res) => {
 
     res.status(201).json({ message: 'Event added successfully' });
   } catch (err) {
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error',errormessage: err });
   }
 };
 
