@@ -22,11 +22,7 @@ const { authenticate } = require("../middleware/auth");
 router.post("/add", authenticate, addEvent);
 
 // Get events
-router.get(
-    "/",
-    // authenticate, //removed for testing purposes
-    getEvents
-);
+router.get("/", authenticate, getEvents);
 
 // Update event
 router.put("/update", authenticate, updateEvent);
@@ -40,7 +36,7 @@ router.get("/:eventId", authenticate, getEventById);
 //Get event by location
 router.get("/location/:location", authenticate, getEventsByLocation);
 
-//Get events by status
+//Get 3 events by status
 router.get("/status/:status", authenticate, get3EventsByStatus);
 
 //Get 3 upcoming events by location
