@@ -17,6 +17,10 @@ const UserSchema = new mongoose.Schema({
     eventsAttending: [
         { type: mongoose.Schema.Types.ObjectId, ref: "Event", default: [] },
     ],
+    otp: { 
+        code: { type: String }, 
+        expiresAt: { type: Date } 
+    },
 });
 
 module.exports = mongoose.model("User", UserSchema);

@@ -1,10 +1,13 @@
 const Event = require("../models/Event");
 const path = require("path");
+const User = require('../models/User');
 
 // Add new event with base64 encoded images
 exports.addEvent = async (req, res) => {
   const { eventName, startDate, endDate, location, aboutEvent, images , comments, backgroundImage} = req.body;
   const userId = req.user.id;
+
+
 
   // Validate images (ensure they are base64 strings)
   if (images && images.length > 5) {
@@ -33,7 +36,30 @@ exports.addEvent = async (req, res) => {
       backgroundImage,
     });
 
-    await newEvent.save();
+    // Save the new event to the database
+    const savedEvent = await newEvent.save();
+
+    // Add the event to the user's eventsAttending array
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (user.eventsAttending.includes(savedEvent._id)) {
+      return res.status(400).json({ message: 'Event is already in user\'s attending list' });
+    }
+    
+    if (user.eventsCreated.includes(savedEvent._id)) {
+      return res.status(400).json({ message: 'Event is already in user\'s created list' });
+    }
+
+    user.eventsAttending.push(savedEvent._id);
+    user.eventsCreated.push(savedEvent._id);
+    
+    // Save user updates
+    await user.save();
+
     res.status(201).json({ message: 'Event added successfully' });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
@@ -149,8 +175,33 @@ exports.getEventsByLocation = async (req, res) => {
 // Delete event
 exports.deleteEvent = async (req, res) => {
     const { eventId } = req.body;
+    const userId = req.user.id;
+
     try {
+        const event = await Event.findById(eventId);
+        if (!event) {
+          return res.status(404).json({ message: "Event not found" });
+        }
+
+        // Check if the user is authorized to delete the event (creator of the event)
+        if (event.userId.toString() !== userId) {
+          return res.status(403).json({ message: "You are not authorized to delete this event" });
+        }
+        
+        // Delete the event
         await Event.findByIdAndDelete(eventId);
+
+        const user = await User.findById(userId);
+        if (!user) {
+          return res.status(404).json({ message: "User not found" });
+        }
+
+        // Remove the eventId from both arrays
+        user.eventsCreated = user.eventsCreated.filter(id => id.toString() !== eventId.toString());
+        user.eventsAttending = user.eventsAttending.filter(id => id.toString() !== eventId.toString());
+
+        // Save the user updates
+        await user.save();
         res.json({ message: "Event deleted successfully" });
     } catch (err) {
         res.status(500).json({ message: "Server error" });
@@ -173,4 +224,114 @@ exports.uploadEventImagesController = (req, res) => {
       files: fileUrls ,
   });
 };
+
+// Add comment to event
+exports.addCommentToEvent = async (req, res) => {
+  const { eventId } = req.params;  
+  const { comment } = req.body;  
+  const userId = req.user.id;  
+  
+  if (!comment || comment.trim() === "") {
+    return res.status(400).json({ message: "Comment cannot be empty" });
+  }
+
+  try {
+    const event = await Event.findById(eventId);
+    
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    // Add new comment to the event's comment array
+    event.comments.push({
+      userId,
+      comment,
+    });
+    
+    await event.save();
+    res.status(200).json({ message: "Comment added successfully", event });
+  } catch (err) {
+    console.error("Error in addCommentToEvent:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Add a user to the event's attendUsers array
+exports.addUserToEvent = async (req, res) => {
+  const { eventId } = req.params;
+  const userId = req.user.id; 
+
+  try {
+    const event = await Event.findById(eventId);
+
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
+
+    // Check if user is already attending
+    if (event.attendUsers.includes(userId)) {
+      return res.status(400).json({ message: 'User is already attending this event' });
+    }
+
+    // Add the user to the attendUsers array
+    event.attendUsers.push(userId);
+
+    // Add the event to the user's eventsAttending array
+    const user = await User.findById(userId);
+
+    if (user.eventsAttending.includes(eventId)) {
+      return res.status(400).json({ message: 'Event is already in user\'s attending list' });
+    }
+
+    user.eventsAttending.push(eventId);
+
+    // Save both event and user updates
+    await event.save();
+    await user.save();
+
+    res.status(200).json({ message: 'User added to event', event });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// Remove a user from the event's attendUsers array
+exports.removeUserFromEvent = async (req, res) => {
+  const { eventId } = req.params;
+  const userId = req.user.id; 
+
+  try {
+    const event = await Event.findById(eventId);
+
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
+
+    // Check if user is attending the event
+    if (!event.attendUsers.includes(userId)) {
+      return res.status(400).json({ message: 'User is not attending this event' });
+    }
+
+    // Remove the user from the attendUsers array
+    event.attendUsers = event.attendUsers.filter(user => user.toString() !== userId.toString());
+
+    // Find the user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Remove the event from the user's eventsAttending array
+    user.eventsAttending = user.eventsAttending.filter(event => event.toString() !== eventId);
+
+    // Save both event and user updates
+    await event.save();
+    await user.save();
+    res.status(200).json({ message: 'User removed from event', event });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+
 
