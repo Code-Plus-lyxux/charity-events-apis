@@ -136,8 +136,10 @@ exports.updateEvent = async (req, res) => {
             return res.status(404).json({ message: "Event not found" });
         }
 
-        if(userId != event.userId){
-          return res.status(403).json({message: "You can only edit which event you have created"});
+        if (userId != event.userId) {
+            return res.status(403).json({
+                message: "You can only edit which event you have created",
+            });
         }
 
         event.eventName = eventName || event.eventName;
@@ -160,10 +162,10 @@ exports.getEventById = async (req, res) => {
     const { eventId } = req.params;
 
     try {
-        const event = await Event.findById(eventId).populate(
-            "comments.userId",
-            "profileImage"
-        );
+        const event = await Event.findById(eventId).populate({
+            path: "comments.userId",
+            select: "profileImage fullName",
+        });
         if (!event) {
             return res.status(404).json({ message: "Event not found" });
         }
@@ -203,11 +205,9 @@ exports.deleteEvent = async (req, res) => {
 
         // Check if the user is authorized to delete the event (creator of the event)
         if (event.userId.toString() !== userId) {
-            return res
-                .status(403)
-                .json({
-                    message: "You are not authorized to delete this event",
-                });
+            return res.status(403).json({
+                message: "You are not authorized to delete this event",
+            });
         }
 
         // Delete the event
