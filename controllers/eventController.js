@@ -111,6 +111,7 @@ exports.updateEvent = async (req, res) => {
         images,
         backgroundImage,
     } = req.body;
+    const userId = req.user.id;
 
     // Validate base64 encoded images
     if (images && images.length > 5) {
@@ -133,6 +134,10 @@ exports.updateEvent = async (req, res) => {
         const event = await Event.findById(eventId);
         if (!event) {
             return res.status(404).json({ message: "Event not found" });
+        }
+
+        if(userId != event.userId){
+          return res.status(403).json({message: "You can only edit which event you have created"});
         }
 
         event.eventName = eventName || event.eventName;
