@@ -37,7 +37,7 @@ router.get("/:eventId", authenticate, getEventById);
 router.get("/location/:location", authenticate, getEventsByLocation);
 
 //Get 3 events by status
-router.get("/status/:status", authenticate, get3EventsByStatus);
+router.get("/status/:status", get3EventsByStatus);
 
 //Get 3 upcoming events by location
 router.get(
