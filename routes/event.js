@@ -15,6 +15,7 @@ const {
     addCommentToEvent,
     addUserToEvent,
     removeUserFromEvent,
+    getAllEvents
 } = require("../controllers/eventController");
 const { authenticate } = require("../middleware/auth");
 
@@ -51,6 +52,12 @@ router.get(
     "/upcoming-all-by-location/:location",
     authenticate,
     getAllUpcomingEventsByLocation
+);
+
+//Get all upcoming events
+router.get(
+    "/allEvents/:status",
+    getAllEvents
 );
 
 // Route for uploading event images
