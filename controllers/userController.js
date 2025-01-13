@@ -1,4 +1,4 @@
-const fs = require("fs");
+const fs = require("fs").promises;
 const path = require("path");
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
@@ -9,13 +9,23 @@ exports.updateProfile = async (req, res) => {
   const userId = req.user.id; // Get user ID from JWT token
   const profileImage = req.file ? `/usersprofilepics/${req.file.filename}` : req.body.profileImage;
 
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-
-    try {
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
+    // If a new profile image is uploaded and it differs from the existing one, delete the old image
+    if (req.file && user.profileImage && user.profileImage !== profileImage) {
+      const oldImagePath = path.join(__dirname, "../usersprofilepics", path.basename(user.profileImage));
+      try {
+        await fs.access(oldImagePath);
+        await fs.unlink(oldImagePath); 
+        console.log(`Deleted old profile image: ${oldImagePath}`);
+      } catch (err) {
+        console.error(`Failed to delete old profile image: ${oldImagePath}`, err.message);
+      }
+    }
 
     user.fullName = fullName || user.fullName;
     user.mobile = mobile || user.mobile;

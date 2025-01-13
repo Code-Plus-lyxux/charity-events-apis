@@ -1,6 +1,7 @@
 const Event = require("../models/Event");
 const path = require("path");
 const User = require("../models/User");
+const fs = require("fs").promises;
 
 // Add new event with base64 encoded images
 exports.addEvent = async (req, res) => {
@@ -114,7 +115,7 @@ exports.updateEvent = async (req, res) => {
     const userId = req.user.id;
 
     // Validate base64 encoded images
-    if (images && images.length > 5) {
+    if (images && images.length > 10) {
         return res
             .status(400)
             .json({ message: "You can only upload up to 5 images" });
@@ -129,7 +130,6 @@ exports.updateEvent = async (req, res) => {
     //         message: "One or more images are not in valid base64 format",
     //     });
     // }
-
     try {
         const event = await Event.findById(eventId);
         if (!event) {
@@ -142,13 +142,50 @@ exports.updateEvent = async (req, res) => {
             });
         }
 
+        // Identify images to be deleted
+        const existingImages = event.images || [];
+        const imagesToKeep = images?.filter((img) => existingImages.includes(img));
+        const newImages = images.filter((img) => !existingImages.includes(img));
+        const imagesToDelete = existingImages.filter((img) => !images.includes(img));
+
+        // Function to extract the filename from URL
+        const extractFileName = (url) => {
+            return path.basename(url); 
+        };
+
+        // Delete the unused images from the file system
+        for (const img of imagesToDelete) {
+            const fileName = extractFileName(img);
+            const filePath = path.join(__dirname, "../eventimages", fileName);
+
+            try {
+                await fs.access(filePath); 
+                await fs.unlink(filePath); 
+                console.log(`Deleted image: ${fileName}`);
+            } catch (err) {
+                console.error(`Failed to delete image: ${fileName}`, err.message);
+            }
+        }
+
+        event.images = imagesToKeep.concat(newImages);
+
+        // Handle background image upload
+        if (backgroundImage) {
+            const existingBackgroundImage = event.backgroundImage;
+            if (existingBackgroundImage && existingBackgroundImage !== backgroundImage) {
+                const bgFilePath = path.join(__dirname, "../eventimages", existingBackgroundImage);
+                if (fs.existsSync(bgFilePath)) {
+                    fs.unlinkSync(bgFilePath); 
+                }
+            }
+            event.backgroundImage = backgroundImage || event.backgroundImage;
+        }
+
         event.eventName = eventName || event.eventName;
         event.startDate = startDate || event.startDate;
         event.endDate = endDate || event.endDate;
         event.location = location || event.location;
         event.aboutEvent = aboutEvent || event.aboutEvent;
-        event.images = images || event.images;
-        event.backgroundImage = backgroundImage || event.backgroundImage;
 
         await event.save();
         res.json({ message: "Event updated successfully" });
