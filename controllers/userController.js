@@ -10,6 +10,7 @@ exports.updateProfile = async (req, res) => {
   const profileImage = req.file ? `/usersprofilepics/${req.file.filename}` : req.body.profileImage;
 
 
+
     try {
         const user = await User.findById(userId);
         if (!user) {

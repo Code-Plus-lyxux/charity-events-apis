@@ -278,9 +278,31 @@ exports.getAllUpcomingEventsByLocation = async (req, res) => {
 
         res.json(events);
     } catch (error) {
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: "Server error", error: error.message });
+        console.log(error);
     }
 };
+
+exports.getAllEvents = async (req, res) => {
+    const { status } = req.params;
+    try {
+        // Fetch events with status 1
+        const events = await Event.find({ status });
+
+        if (!events || events.length === 0) {
+            return res.status(404).json({ message: "Events not found" });
+        }
+
+        // Send events as JSON response
+        res.json(events);
+    }catch (error) {
+            console.error("Error fetching upcoming events:", error.message);
+            console.error("Stack trace:", error.stack); // Logs the error stack trace for debugging
+            res.status(500).json({ message: "Server error" });
+        }
+};
+
+
 
 // Upload the event images
 exports.uploadEventImagesController = (req, res) => {
