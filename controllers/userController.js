@@ -7,7 +7,7 @@ const User = require('../models/User');
 exports.updateProfile = async (req, res) => {
   const { fullName, mobile, password,about,location } = req.body;
   const userId = req.user.id; // Get user ID from JWT token
-  const profileImage = req.file ? `/usersprofilepics/${req.file.filename}` : req.body.profileImage;
+  const profileImage = req.file ? `${req.protocol}://${req.get("host")}/usersprofilepics/${req.file.filename}` : req.body.profileImage;
 
   try {
     const user = await User.findById(userId);
@@ -45,6 +45,7 @@ exports.updateProfile = async (req, res) => {
 
     // Generate public URL for the profile image
     const imageUrl = `${req.protocol}://${req.get("host")}${user.profileImage}`;
+    user.profileImage = imageUrl;
 
     res.json({ 
       message: 'Profile updated successfully',
@@ -55,7 +56,7 @@ exports.updateProfile = async (req, res) => {
         location: user.location,
         email: user.email,
         mobile: user.mobile,
-        profileImage: imageUrl,
+        profileImage: user.profileImage,
       },
     
     });
