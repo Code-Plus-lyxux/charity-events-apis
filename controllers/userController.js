@@ -7,7 +7,8 @@ const User = require('../models/User');
 exports.updateProfile = async (req, res) => {
   const { fullName, mobile, password,about,location } = req.body;
   const userId = req.user.id; // Get user ID from JWT token
-  const profileImage = req.file ? `/usersprofilepics/${req.file.filename}` : undefined;
+  const profileImage = req.file ? `/usersprofilepics/${req.file.filename}` : req.body.profileImage;
+
 
 
     try {
