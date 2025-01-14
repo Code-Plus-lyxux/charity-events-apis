@@ -171,11 +171,37 @@ exports.updateEvent = async (req, res) => {
 
         // Handle background image upload
         if (backgroundImage) {
+            const extractFileNameFromUrl = (url) => {
+                try {
+                    const fileName = url.split('/').pop();
+                    if (!fileName) throw new Error("Invalid URL structure");
+                    return fileName;
+                } catch (err) {
+                    console.error("Failed to extract file name from URL:", url, err.message);
+                    return null;
+                }
+            };
             const existingBackgroundImage = event.backgroundImage;
             if (existingBackgroundImage && existingBackgroundImage !== backgroundImage) {
-                const bgFilePath = path.join(__dirname, "../eventimages", existingBackgroundImage);
-                if (fs.existsSync(bgFilePath)) {
-                    fs.unlinkSync(bgFilePath); 
+                const fileName = extractFileNameFromUrl(existingBackgroundImage);
+                if (fileName) {
+                    // Construct the local file path
+                    const bgFilePath = path.join(__dirname, "../eventimages", fileName);
+        
+                    console.log("Background image file path:", bgFilePath); // Debug log
+        
+                    try {
+                        // Check if the file exists
+                        await fs.access(bgFilePath);
+        
+                        // Delete the file
+                        await fs.unlink(bgFilePath);
+                        console.log(`Deleted background image: ${existingBackgroundImage}`);
+                    } catch (err) {
+                        console.error(`Failed to delete background image: ${existingBackgroundImage}`, err.message);
+                    }
+                } else {
+                    console.error("Could not construct file path for background image deletion.");
                 }
             }
             event.backgroundImage = backgroundImage || event.backgroundImage;
@@ -190,7 +216,12 @@ exports.updateEvent = async (req, res) => {
         await event.save();
         res.json({ message: "Event updated successfully" });
     } catch (err) {
-        res.status(500).json({ message: "Server error" });
+        console.error('Error:', err);
+        res.status(500).json({ 
+            message: "Server error",
+            error: err.message,
+            stack: err.stack,
+        });
     }
 };
 
